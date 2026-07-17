@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% if status == 'denied' %}访问申请已拒绝{% else %}等待访问授权{% endif %}</title>
+    <script>
+        const systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        document.documentElement.classList.toggle('dark', systemThemeQuery.matches);
+    </script>
+    <style>
+        :root { color-scheme: light; }
+        html.dark { color-scheme: dark; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: linear-gradient(to bottom, #f1f5f9, #e2e8f0); color: #172033; font-family: "Microsoft YaHei", Arial, sans-serif; transition: background-color .3s ease, color .3s ease; }
+        main { width: min(440px, calc(100% - 40px)); padding: 36px; border: 1px solid #dbe4f0; border-radius: 16px; background: linear-gradient(145deg, rgba(255,255,255,.95), rgba(240,249,255,.72) 48%, rgba(238,242,255,.78)); box-shadow: 0 12px 30px rgba(15, 23, 42, .08); text-align: center; transition: background .3s ease, border-color .3s ease, box-shadow .3s ease; }
+        h1 { margin: 0 0 12px; font-size: 23px; }
+        p { margin: 0; color: #64748b; line-height: 1.7; }
+        .denial-reason { text-align: left; text-indent: 2em; }
+        a { display: inline-block; margin-top: 24px; padding: 9px 16px; border-radius: 8px; background: #2563eb; color: #fff; text-decoration: none; transition: background-color .2s ease, transform .2s ease; }
+        a:hover { background: #1d4ed8; transform: translateY(-1px); }
+        html.dark body { background: linear-gradient(to bottom, #020617, #0f172a); color: #f8fafc; }
+        html.dark main { border-color: #1e293b; background: linear-gradient(145deg, rgba(15,23,42,.9), rgba(15,34,57,.8)); box-shadow: 0 12px 30px rgba(0, 0, 0, .3); }
+        html.dark p { color: #cbd5e1; }
+        html.dark a { background: #2563eb; }
+        html.dark a:hover { background: #3b82f6; }
+    </style>
+</head>
+<body>
+    <main>
+        {% if status == 'denied' %}
+        <h1>访问申请已拒绝</h1>
+        <p class="denial-reason">{{ denial_reason }}</p>
+        {% else %}
+        <h1>登录成功，等待管理员审批</h1>
+        <p>您的访问申请已提交。请联系管理员完成授权后重新进入智能助手。</p>
+        {% endif %}
+        <a href="/entra/logout">退出登录</a>
+    </main>
+    <script>
+        systemThemeQuery.addEventListener('change', (event) => {
+            document.documentElement.classList.toggle('dark', event.matches);
+        });
+    </script>
+</body>
+</html>

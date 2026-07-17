@@ -1,0 +1,2 @@
+{"sessionId": "image-upload-system-error", "runId": "pre-fix", "hypothesisId": "A", "location": "start_server.py:_webchat_upload", "msg": "[DEBUG] 已生成上传附件公开地址", "data": {"scheme": "http", "host": "127.0.0.1:50439", "path_prefix": true}, "ts": 1784170618870}
+{"sessionId": "image-upload-system-error", "runId": "post-fix", "hypothesisId": "A", "location": "start_server.py:_webchat_upload", "msg": "[DEBUG] 已生成上传附件公开地址", "data": {"scheme": "https", "host": "help.example.com", "path_prefix": true, "uses_configured_public_base_url": true}, "ts": 1784170703343}

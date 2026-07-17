@@ -1,0 +1,45 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Install Python dependencies",
+      "type": "shell",
+      "command": "pip install -r requirements.txt",
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Mock Agent",
+      "type": "shell",
+      "command": "python app.py",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Teams App Tester",
+      "type": "shell",
+      "command": "teamsapptester",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Agent Dev CLI",
+      "type": "shell",
+      "command": "agentdev",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Refresh Token And Run WebChat",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "scripts/refresh-token-and-run.ps1"
+      ],
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

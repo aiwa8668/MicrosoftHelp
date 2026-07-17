@@ -1,0 +1,34 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Run Mock Agent",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/app.py",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Python: Attach (debugpy 5678)",
+      "type": "python",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      }
+    },
+    {
+      "name": "Agent Dev CLI",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "agentdev"
+    },
+    {
+      "name": "Teams App Tester",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "teamsapptester"
+    }
+  ]
+}

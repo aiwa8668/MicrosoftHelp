@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>身份验证 - 智能助手</title>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <script>
+        const systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        document.documentElement.classList.toggle('dark', systemThemeQuery.matches);
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' };
+    </script>
+    <style>
+        html, body { height: 100%; }
+        html { color-scheme: light; }
+        html.dark { color-scheme: dark; }
+        body { transition: background-color 0.3s ease, color 0.3s ease; }
+        .theme-toggle-label { font-size: 13px; font-weight: 600; }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 50% 42%, rgba(34, 211, 238, 0.21), transparent 30%),
+                radial-gradient(circle at 14% 84%, rgba(59, 130, 246, 0.13), transparent 30%),
+                radial-gradient(circle at 87% 14%, rgba(139, 92, 246, 0.11), transparent 28%),
+                linear-gradient(145deg, rgba(255,255,255,0.95), rgba(240,249,255,0.7) 48%, rgba(238,242,255,0.76));
+            opacity: 0.9;
+        }
+        html.dark .login-card::before {
+            background:
+                radial-gradient(circle at 50% 42%, rgba(34, 211, 238, 0.17), transparent 30%),
+                radial-gradient(circle at 14% 84%, rgba(59, 130, 246, 0.12), transparent 30%),
+                radial-gradient(circle at 87% 14%, rgba(139, 92, 246, 0.12), transparent 28%),
+                linear-gradient(145deg, rgba(15,23,42,0.82), rgba(15,34,57,0.75));
+            opacity: 0.85;
+        }
+
+        .ai-orbit {
+            transform-origin: 320px 145px;
+            animation: ai-orbit 16s linear infinite;
+        }
+        .ai-pulse {
+            transform-origin: center;
+            animation: ai-pulse 3.8s ease-in-out infinite;
+        }
+        .ai-signal {
+            animation: ai-signal 4.8s ease-in-out infinite alternate;
+        }
+        .ai-mouth {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: ai-mouth 2.2s ease-in-out infinite;
+        }
+        .ai-message {
+            transform-box: fill-box;
+            transform-origin: center;
+            animation: ai-message 2.8s ease-in-out infinite;
+        }
+        @keyframes ai-orbit {
+            to { transform: rotate(360deg); }
+        }
+        @keyframes ai-pulse {
+            0%, 100% { opacity: .5; transform: scale(.96); }
+            50% { opacity: .9; transform: scale(1.04); }
+        }
+        @keyframes ai-signal {
+            from { opacity: .25; transform: translateX(-5px); }
+            to { opacity: .65; transform: translateX(5px); }
+        }
+        @keyframes ai-mouth {
+            0%, 100% { transform: scaleY(.7); opacity: .7; }
+            45%, 60% { transform: scaleY(1.28); opacity: 1; }
+        }
+        @keyframes ai-message {
+            0%, 100% { transform: translateY(2px) scale(.96); opacity: .72; }
+            50% { transform: translateY(-4px) scale(1.04); opacity: 1; }
+        }
+
+        .login-illustration {
+            position: absolute;
+            top: 80px;
+            left: 5%;
+            width: 90%;
+            height: clamp(170px, 36vw, 205px);
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        html.dark .login-illustration { opacity: 0.5; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ai-orbit, .ai-pulse, .ai-signal { animation: none; }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
+
+    <div class="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-950 dark:to-slate-900">
+        <div class="login-card relative overflow-hidden w-full max-w-lg rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 pt-6 pb-2 text-center backdrop-blur-sm">
+
+            <div class="relative z-10 text-2xl font-black tracking-tight text-slate-900 dark:text-white">微软技术智能助手</div>
+
+            <svg class="login-illustration" viewBox="0 0 640 300" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                    <linearGradient id="botShell" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity=".94"/>
+                        <stop offset="100%" stop-color="#bae6fd" stop-opacity=".7"/>
+                    </linearGradient>
+                    <linearGradient id="botFace" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#0f3c78"/>
+                        <stop offset="100%" stop-color="#075985"/>
+                    </linearGradient>
+                </defs>
+                <g class="ai-orbit" fill="none" stroke="#22d3ee" stroke-opacity=".55">
+                    <circle cx="320" cy="145" r="126" stroke-width="8"/>
+                    <circle cx="320" cy="145" r="112" stroke-width="1.5" stroke-dasharray="4 7"/>
+                    <path d="M183 145a137 137 0 0 1 274 0" stroke="#a78bfa" stroke-opacity=".55" stroke-width="12" stroke-dasharray="44 15"/>
+                </g>
+                <g class="ai-signal" fill="none" stroke="#38bdf8" stroke-opacity=".38" stroke-width="2">
+                    <path d="M119 186H202M438 105h92M470 220h83"/>
+                    <circle cx="202" cy="186" r="5" fill="#f59e0b"/><circle cx="438" cy="105" r="5" fill="#a78bfa"/>
+                </g>
+                <g class="ai-pulse">
+                    <path d="M257 138v-26c0-35 28-57 63-57s63 22 63 57v26" fill="none" stroke="#a78bfa" stroke-width="8" stroke-linecap="round"/>
+                    <circle cx="257" cy="112" r="10" fill="#ffffff" stroke="#f59e0b" stroke-width="6"/>
+                    <circle cx="383" cy="112" r="10" fill="#ffffff" stroke="#ec4899" stroke-width="6"/>
+                    <rect x="239" y="117" width="162" height="103" rx="43" fill="url(#botShell)" stroke="#22d3ee" stroke-width="4"/>
+                    <rect x="266" y="143" width="108" height="50" rx="22" fill="url(#botFace)"/>
+                    <circle cx="296" cy="168" r="7" fill="#fef3c7"/><circle cx="344" cy="168" r="7" fill="#fce7f3"/>
+                    <path class="ai-mouth" d="M307 181q13 12 26 0" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+                    <rect x="220" y="145" width="25" height="52" rx="13" fill="#ccfbf1" stroke="#14b8a6" stroke-width="3"/>
+                    <rect x="395" y="145" width="25" height="52" rx="13" fill="#f3e8ff" stroke="#a855f7" stroke-width="3"/>
+                </g>
+                <g transform="translate(416 44)">
+                    <g class="ai-message" fill="#ffffff" fill-opacity=".8" stroke="#22d3ee" stroke-opacity=".72" stroke-width="4">
+                        <path d="M0 10q0-20 22-20h74q22 0 22 20v29q0 20-22 20H43L16 79l5-20q-21-1-21-20z"/>
+                        <circle cx="40" cy="25" r="6" fill="#38bdf8" stroke="none"/><circle cx="60" cy="25" r="6" fill="#f59e0b" stroke="none"/><circle cx="80" cy="25" r="6" fill="#ec4899" stroke="none"/>
+                    </g>
+                </g>
+            </svg>
+
+            <div class="relative z-10 h-56"></div>
+
+            <div class="relative z-10 flex flex-col items-center">
+                <div id="entra-error"
+                    class="hidden w-full mb-4 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300 text-center font-medium">
+                </div>
+
+                <div class="flex flex-col items-center gap-3">
+                    <button id="entra-login-btn" type="button"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/30 ring-1 ring-white/20 dark:ring-blue-300/15">
+                        <svg class="w-4 h-4" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                            <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                            <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                            <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                        </svg>
+                        Entra ID 账号登录
+                    </button>
+                    <button id="entra-china-login-btn" type="button"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/30 ring-1 ring-white/20 dark:ring-blue-300/15">
+                        <svg class="w-4 h-4" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                            <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                            <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                            <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                        </svg>
+                        世纪互联账号登录
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        systemThemeQuery.addEventListener('change', (event) => {
+            document.documentElement.classList.toggle('dark', event.matches);
+        });
+
+        // 错误信息展示
+        const params = new URLSearchParams(window.location.search);
+        const errMsg = params.get('entra_error');
+        if (errMsg) {
+            const el = document.getElementById('entra-error');
+            el.innerHTML =
+                '<svg class="inline w-4 h-4 mr-1.5 -mt-0.5" fill="currentColor" viewBox="0 0 20 20">' +
+                '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>' +
+                document.createElement('span').appendChild(document.createTextNode(errMsg)).parentNode.innerHTML;
+            el.classList.remove('hidden');
+        }
+
+        // 登录按钮跳转
+        document.getElementById('entra-login-btn').addEventListener('click', () => {
+            window.location.href = '/entra/login';
+        });
+        document.getElementById('entra-china-login-btn').addEventListener('click', () => {
+            window.location.href = '/entra/china/login';
+        });
+    </script>
+</body>
+</html>

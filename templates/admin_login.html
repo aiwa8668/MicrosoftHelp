@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台登录 - FAQ</title>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+    <script>
+        // 与后台页面保持一致：仅跟随显式主题选择，默认浅色
+        if (localStorage.getItem('color-theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
+    <style>
+        html, body { height: 100%; }
+        html { color-scheme: light; }
+        html.dark { color-scheme: dark; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-slate-100">
+    <div class="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-950 dark:to-slate-900">
+        <div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-6">
+            <h1 class="text-xl font-bold text-center mb-2 text-slate-900 dark:text-slate-100">管理后台登录</h1>
+            <div id="login-subtitle" class="text-sm text-center text-slate-600 dark:text-slate-400 mb-4">请输入账号、密码和动态码</div>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="username" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">账号</label>
+                    <input id="username" name="username" type="text" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ username }}" autocomplete="username" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">密码</label>
+                    <input id="password" name="password" type="password" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="current-password" required>
+                </div>
+
+                <div id="captcha-section">
+                    <label for="dynamic-code" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">动态码</label>
+                    <div class="flex items-center gap-2">
+                        <input id="dynamic-code" name="dynamic-code" type="text" class="w-28 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-widest" maxlength="8" autocomplete="off" required>
+                        <img id="dynamic-code-image" alt="验证码" title="点击刷新动态码" class="h-11 w-[150px] rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 object-cover cursor-pointer" src="{{ captcha_image }}">
+                        <div id="dynamic-code-expire" class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap"></div>
+                    </div>
+                </div>
+
+                <div id="otp-section" class="hidden">
+                    <label for="otp-code" class="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">OTP验证码</label>
+                    <input id="otp-code" name="otp-code" type="text" class="w-40 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 tracking-[0.3em]" maxlength="6" autocomplete="one-time-code" placeholder="123456">
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">该账号已启用MFA，请输入验证器App中的6位OTP</p>
+                </div>
+
+                <button id="login-btn" type="submit" class="w-full rounded-lg bg-blue-600 text-white py-2 font-semibold hover:bg-blue-700 transition-colors">登录</button>
+            </form>
+
+            <div id="login-message" class="mt-4 text-sm text-center text-red-600 dark:text-red-400"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const btn = document.getElementById('login-btn');
+        const msg = document.getElementById('login-message');
+        const subtitle = document.getElementById('login-subtitle');
+        const usernameInput = document.getElementById('username');
+        const captchaSection = document.getElementById('captcha-section');
+        const otpSection = document.getElementById('otp-section');
+        const dynamicCodeInput = document.getElementById('dynamic-code');
+        const otpCodeInput = document.getElementById('otp-code');
+        const codeImage = document.getElementById('dynamic-code-image');
+        const codeExpire = document.getElementById('dynamic-code-expire');
+
+        let currentLoginMethod = 'captcha';
+        let dynamicCodeExpireSeconds = 0;
+        let expireTimer = null;
+        let detectTimer = null;
+        let detectRequestSeq = 0;
+
+        function renderExpireText() {
+            if (dynamicCodeExpireSeconds <= 0) {
+                codeExpire.textContent = '动态码已过期。';
+                codeExpire.style.color = '#ef4444';
+                return;
+            }
+            codeExpire.textContent = '有效期 ' + dynamicCodeExpireSeconds + ' 秒';
+            codeExpire.style.color = dynamicCodeExpireSeconds <= 30 ? '#f97316' : '';
+        }
+
+        function startExpireCountdown(seconds) {
+            dynamicCodeExpireSeconds = Number(seconds) || 0;
+            renderExpireText();
+            if (expireTimer) clearInterval(expireTimer);
+            expireTimer = setInterval(() => {
+                dynamicCodeExpireSeconds -= 1;
+                if (dynamicCodeExpireSeconds <= 0) {
+                    dynamicCodeExpireSeconds = 0;
+                    renderExpireText();
+                    clearInterval(expireTimer);
+                    expireTimer = null;
+                    return;
+                }
+                renderExpireText();
+            }, 1000);
+        }
+
+        async function loadDynamicCode() {
+            if (currentLoginMethod !== 'captcha') return;
+            try {
+                const res = await fetch('/admin/login/captcha');
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error('刷新失败');
+                codeImage.src = data.image_data_url || '';
+                dynamicCodeInput.value = '';
+                startExpireCountdown(Math.min(Number(data.expire_seconds) || 60, 60));
+            } catch (err) {
+                codeExpire.textContent = '刷新失败，请重试';
+                codeExpire.style.color = '#ef4444';
+            }
+        }
+
+        function setLoginMethod(method) {
+            const nextMethod = method === 'mfa' ? 'mfa' : 'captcha';
+            currentLoginMethod = nextMethod;
+            if (nextMethod === 'mfa') {
+                captchaSection.classList.add('hidden');
+                otpSection.classList.remove('hidden');
+                dynamicCodeInput.required = false;
+                otpCodeInput.required = true;
+                subtitle.textContent = '请输入账号、密码和OTP验证码';
+            } else {
+                otpSection.classList.add('hidden');
+                captchaSection.classList.remove('hidden');
+                otpCodeInput.required = false;
+                dynamicCodeInput.required = true;
+                subtitle.textContent = '请输入账号、密码和动态码';
+            }
+        }
+
+        async function detectLoginMethod() {
+            const username = usernameInput.value.trim();
+            const reqSeq = ++detectRequestSeq;
+            if (!username) {
+                setLoginMethod('captcha');
+                return;
+            }
+            try {
+                const res = await fetch('/admin/login-method?username=' + encodeURIComponent(username));
+                const data = await res.json().catch(() => ({}));
+                if (reqSeq !== detectRequestSeq) return;
+                if (!res.ok) {
+                    setLoginMethod('captcha');
+                    return;
+                }
+                setLoginMethod(data.method || 'captcha');
+            } catch (err) {
+                if (reqSeq !== detectRequestSeq) return;
+                setLoginMethod('captcha');
+            }
+        }
+
+        codeImage.addEventListener('click', () => {
+            loadDynamicCode();
+        });
+
+        usernameInput.addEventListener('input', () => {
+            if (detectTimer) clearTimeout(detectTimer);
+            detectTimer = setTimeout(() => {
+                detectLoginMethod();
+            }, 280);
+        });
+
+        usernameInput.addEventListener('blur', () => {
+            detectLoginMethod();
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msg.textContent = '';
+            btn.disabled = true;
+            btn.textContent = '登录中...';
+
+            const username = usernameInput.value.trim();
+            const password = document.getElementById('password').value;
+            const dynamic_code = dynamicCodeInput.value.trim().toUpperCase();
+            const otp_code = otpCodeInput.value.trim();
+
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            if (currentLoginMethod === 'mfa') {
+                formData.append('otp_code', otp_code);
+            } else {
+                formData.append('captcha', dynamic_code);
+            }
+
+            try {
+                const res = await fetch('/admin/login', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!res.ok) {
+                    if (res.status === 302 || res.url.includes('/admin')) {
+                        window.location.href = '/admin';
+                        return;
+                    }
+                    const text = await res.text();
+                    if (text.includes('登录失败')) {
+                        msg.textContent = '登录失败，请检查账号、密码和验证码';
+                    } else {
+                        msg.textContent = '登录失败';
+                    }
+                    return;
+                }
+                window.location.href = '/admin';
+            } catch (err) {
+                msg.textContent = '网络异常：' + err.message;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '登录';
+            }
+        });
+
+        setLoginMethod('captcha');
+        detectLoginMethod();
+        startExpireCountdown(60);
+    </script>
+</body>
+</html>

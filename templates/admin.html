@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>管理后台</title>
+    <style>
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            background: #f3f5f8;
+            color: #0f172a
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh
+        }
+
+        .sidebar {
+            width: 230px;
+            background: #fff;
+            border-right: 1px solid #e2e8f0;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .sidebar h1 {
+            font-size: 20px;
+            margin: 4px 8px 12px
+        }
+
+        .menu-btn {
+            border: 1px solid #d6dde7;
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 10px 12px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px
+        }
+
+        .menu-btn.active {
+            background: #dbeafe;
+            border-color: #93c5fd;
+            font-weight: 700
+        }
+
+        .menu-btn.logout {
+            margin-top: auto;
+            background: #fee2e2;
+            border-color: #fecaca;
+            color: #991b1b
+        }
+
+        .sidebar-bottom {
+            margin-top: auto;
+            border-top: 1px solid #e2e8f0;
+            padding: 12px 4px 4px
+        }
+
+        .admin-connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 8px 12px;
+            color: #475569;
+            font-size: 12px
+        }
+
+        .admin-connection-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #dc2626;
+            box-shadow: 0 0 0 0 rgba(220, 38, 38, .55);
+            animation: admin-connection-pulse 1.4s infinite
+        }
+
+        .admin-connection-status.connected .admin-connection-dot {
+            background: #16a34a;
+            box-shadow: 0 0 0 0 rgba(22, 163, 74, .55)
+        }
+
+        @keyframes admin-connection-pulse {
+            70% { box-shadow: 0 0 0 7px transparent }
+            100% { box-shadow: 0 0 0 0 transparent }
+        }
+
+        .admin-session-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 13px
+        }
+
+        .admin-session-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 600
+        }
+
+        .content {
+            flex: 1;
+            padding: 16px 18px 22px;
+            overflow: auto
+        }
+
+        .topbar {
+            background: #fff;
+            border: 1px solid #dbe2ec;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .panel {
+            display: none;
+            background: #fff;
+            border: 1px solid #dbe2ec;
+            border-radius: 12px;
+            padding: 14px
+        }
+
+        .panel.active {
+            display: block
+        }
+
+        h2 {
+            margin: 0 0 8px;
+            font-size: 22px
+        }
+
+        h3 {
+            margin: 0 0 10px;
+            font-size: 21px
+        }
+
+        h4 {
+            margin: 0 0 12px;
+            font-size: 22px
+        }
+
+        .muted {
+            color: #64748b;
+            font-size: 13px
+        }
+
+        .admin-form {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 10px;
+            align-items: end
+        }
+
+        .admin-form label {
+            display: block;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 4px
+        }
+
+        input {
+            width: 100%;
+            height: 34px;
+            border: 1px solid #c7d1de;
+            border-radius: 6px;
+            padding: 0 10px
+        }
+
+        input[type=checkbox] {
+            width: 16px;
+            height: 16px;
+            padding: 0;
+            border: 0;
+            cursor: pointer
+        }
+
+        .btn {
+            height: 34px;
+            border: 1px solid #d1d5db;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 0 12px;
+            cursor: pointer;
+            font-size: 13px
+        }
+
+        .btn.primary {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: #fff
+        }
+
+        .btn.danger {
+            background: #fee2e2;
+            border-color: #fecaca;
+            color: #b91c1c
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, .36)
+        }
+
+        .dialog-card {
+            width: min(520px, 100%);
+            padding: 22px;
+            border: 1px solid #bfdbfe;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 20px 48px rgba(15, 23, 42, .22)
+        }
+
+        .dialog-card h3 {
+            margin: 0 0 8px;
+            color: #1d4ed8;
+            font-size: 20px
+        }
+
+        .dialog-card textarea {
+            width: 100%;
+            min-height: 132px;
+            margin-top: 12px;
+            padding: 10px;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            color: #0f172a;
+            font: inherit;
+            line-height: 1.6;
+            resize: vertical
+        }
+
+        .dialog-card textarea:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px
+        }
+
+        th,
+        td {
+            border: 1px solid #e5e7eb;
+            padding: 8px 8px;
+            vertical-align: middle;
+            font-size: 14px
+        }
+
+        th {
+            background: #f8fafc
+        }
+
+        .faq-id {
+            width: 16px;
+            white-space: nowrap;
+            text-align: center
+        }
+
+        .faq-sort {
+            width: 48px;
+            white-space: nowrap;
+            text-align: center
+        }
+
+        .faq-category {
+            width: 100px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .faq-status {
+            width: 36px;
+            white-space: nowrap
+        }
+
+        .faq-actions {
+            width: 190px;
+            white-space: nowrap
+        }
+
+        .faq-title {
+            width: 42%;
+            word-break: break-word
+        }
+
+        .inline {
+            display: inline
+        }
+
+        .actions-wrap {
+            display: flex;
+            align-items: center;
+            gap: 18px
+        }
+
+        .faq-actions .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            padding: 0
+        }
+
+        .status-on {
+            color: #059669;
+            font-weight: 700
+        }
+
+        .status-off {
+            color: #94a3b8;
+            font-weight: 700
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        @media(max-width: 1200px) {
+            .admin-form {
+                grid-template-columns: 1fr 1fr
+            }
+
+            .admin-form .full {
+                grid-column: 1 / -1
+            }
+        }
+
+        @media(max-width: 900px) {
+            .layout {
+                display: block
+            }
+
+            .sidebar {
+                width: 100%;
+                border-right: 0;
+                border-bottom: 1px solid #e2e8f0;
+                flex-direction: row;
+                flex-wrap: wrap
+            }
+
+            .menu-btn.logout {
+                margin-top: 0;
+                margin-left: auto
+            }
+        }
+
+        .filter-dropdown {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px
+        }
+
+        .filter-dropdown-btn {
+            padding: 0 2px;
+            border: none;
+            background: transparent;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 11px;
+            height: 18px;
+            width: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            flex-shrink: 0;
+            color: #666;
+            line-height: 1
+        }
+
+        .filter-dropdown-btn:hover {
+            color: #333
+        }
+
+        .filter-dropdown-btn.active {
+            color: #3166df
+        }
+
+        .filter-panel {
+            position: fixed;
+            z-index: 100;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+            min-width: 240px;
+            max-width: 320px;
+            white-space: normal
+        }
+
+        .filter-panel.show {
+            display: block
+        }
+
+        .filter-panel-header {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e5e7eb
+        }
+
+        .filter-search {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-size: 12px
+        }
+
+        .filter-panel-content {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 4px 0
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px
+        }
+
+        .filter-item:hover {
+            background: #f8fafc
+        }
+
+        .filter-item input[type=checkbox] {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+            margin: 0;
+            flex-shrink: 0
+        }
+
+        .filter-item-label {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 12px
+        }
+
+        .filter-panel-footer {
+            padding: 6px 8px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px
+        }
+
+        .filter-count {
+            color: #64748b;
+            font-size: 11px;
+            white-space: nowrap
+        }
+
+        .filter-actions a {
+            margin-left: 8px;
+            color: #3166df;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 11px
+        }
+
+        .filter-actions a:hover {
+            text-decoration: underline
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <h1>管理后台</h1>
+            <button class="menu-btn active" data-panel="faqPanel">FAQ管理</button>
+            <button class="menu-btn" data-panel="logsPanel">日志查询</button>
+            <button class="menu-btn" data-panel="accessApprovals">访问授权管理</button>
+            <button class="menu-btn" data-panel="adminAccounts">管理员管理</button>
+
+            <div class="sidebar-bottom">
+                <div class="admin-connection-status" id="adminConnectionStatus" role="status">
+                    <span class="admin-connection-dot" aria-hidden="true"></span>
+                    <span id="adminConnectionText">正在检查连接...</span>
+                </div>
+                <div class="admin-session-row">
+                    <span class="admin-session-name" title="{{ display_name | escape }}">{{ display_name | escape }}</span>
+                    <button class="btn danger" onclick="location.href='/admin/logout'">退出</button>
+                </div>
+            </div>
+        </aside>
+        <main class="content">
+            <section class="panel" id="adminAccounts">
+                <div style="background:#dbeafe;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin-bottom:12px;text-align:center;">
+                    <h3>管理员账号管理</h3>
+                    <div class="muted">支持新增管理员账号、修改账号启用状态、修改管理员密码。</div>
+                </div>
+                <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px;">
+                    <h4>新增管理员账号</h4>
+                    <div class="admin-form">
+                        <div><label>新账号</label><input id="newAdminUsername" placeholder="至少 3 位"></div>
+                        <div><label>显示名称</label><input id="newAdminDisplayName" placeholder="可选，默认同账号"></div>
+                        <div><label>新密码</label><input id="newAdminPassword" type="password" placeholder="至少 8 位"></div>
+                        <div><label>确认密码</label><input id="newAdminPasswordConfirm" type="password" placeholder="再次输入密码"></div>
+                        <div><button id="addAdminBtn" class="btn" style="width:100%;">新增管理员</button></div>
+                    </div>
+                </div>
+                <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+                    <h4>管理员账号列表</h4>
+                    <div id="account-status-message" style="min-height:20px;font-size:13px;color:#059669;margin-bottom:8px;"></div>
+                    <table id="adminAccountsTable"></table>
+                </div>
+            </section>
+
+            <section class="panel active" id="faqPanel">
+                <div class="toolbar">
+                    <div>
+                        <h2>FAQ 管理</h2>
+                        <div class="muted">排序值越小，前台显示越靠前。</div>
+                    </div>
+                    <div><a class="btn primary" href="/admin/faq/new" target="_blank" rel="noopener noreferrer"
+                            style="display:inline-flex;align-items:center;text-decoration:none;">新增 FAQ</a></div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="faq-id">ID</th>
+                            <th class="faq-title">标题</th>
+                            <th class="faq-category">分类</th>
+                            <th class="faq-sort">排序</th>
+                            <th class="faq-status">状态</th>
+                            <th class="faq-actions">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in faq_rows %}
+                        <tr>
+                            <td class="faq-id">{{ row.id }}</td>
+                            <td class="faq-title">{{ row.title | escape }}</td>
+                            <td class="faq-category">{{ row.category | escape if row.category else '未分类' }}</td>
+                            <td class="faq-sort">{{ row.sort_order }}</td>
+                            <td class="faq-status">{{ '已发布' if row.is_published else '草稿' }}</td>
+                            <td class="faq-actions">
+                                <div class="actions-wrap">
+                                    <a class="btn" href="/admin/faq/{{ row.id }}/edit" target="_blank"
+                                        rel="noopener noreferrer">编辑</a>
+                                    <form class="inline" method="post" action="/admin/faq/{{ row.id }}/delete"
+                                        onsubmit="return confirm('确认删除该 FAQ？');">
+                                        <input type="hidden" name="{{ csrf_field }}" value="{{ csrf_token | escape }}">
+                                        <button class="btn danger">删除</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="muted">尚无 FAQ，请新增内容。</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="panel" id="logsPanel">
+                <div class="toolbar">
+                    <div>
+                        <h2>日志查询</h2>
+                    </div>
+                    <div><button class="btn" id="refreshLogsBtn">刷新日志</button></div>
+                </div>
+                <div id="logsTableContainer" style="overflow-x:auto;">
+                    <table id="logsTable"></table>
+                </div>
+            </section>
+
+            <section class="panel" id="accessApprovals">
+                <div class="toolbar">
+                    <div>
+                        <h2>访问授权管理</h2>
+                        <div class="muted">首次登录用户将自动进入待审批列表；支持批量批准、拒绝、恢复和取消授权。</div>
+                    </div>
+                    <div class="actions-wrap">
+                        <button class="btn primary" onclick="updateAccessGrants('approve')">批准</button>
+                        <button class="btn" onclick="updateAccessGrants('deny')">拒绝</button>
+                        <button class="btn" onclick="updateAccessGrants('restore')">恢复授权</button>
+                        <button class="btn danger" onclick="updateAccessGrants('revoke')">取消授权</button>
+                        <button class="btn" onclick="loadAccessGrants()">刷新</button>
+                    </div>
+                </div>
+                <table id="accessApprovalsTable"></table>
+            </section>
+        </main>
+    </div>
+
+    <!-- 日志筛选面板容器 -->
+    <div id="logs-filter-panel-container"></div>
+
+    <script>
+        const csrfToken = "{{ csrf_token | escape }}";
+        const menuButtons = [...document.querySelectorAll('.menu-btn[data-panel]')];
+        const panels = [...document.querySelectorAll('.panel')];
+
+        function switchPanel(id) {
+            menuButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.panel === id));
+            panels.forEach(panel => panel.classList.toggle('active', panel.id === id));
+            if (id === 'adminAccounts') loadAdminAccounts();
+            if (id === 'logsPanel') loadLogs();
+            if (id === 'accessApprovals') loadAccessGrants();
+        }
+
+        menuButtons.forEach(btn => btn.addEventListener('click', () => switchPanel(btn.dataset.panel)));
+        loadConnectionStatus();
+
+        async function requestJson(url, options = {}) {
+            const headers = { ...(options.headers || {}), 'X-CSRF-Token': csrfToken };
+            const response = await fetch(url, { ...options, headers });
+            const data = await response.json().catch(() => ({ error: '请求失败' }));
+            if (!response.ok) throw new Error(data.error || '请求失败');
+            return data;
+        }
+
+        async function loadConnectionStatus() {
+            const statusEl = document.getElementById('adminConnectionStatus');
+            const textEl = document.getElementById('adminConnectionText');
+            try {
+                const data = await requestJson('/admin/connection-status');
+                textEl.textContent = data.message;
+                statusEl.classList.toggle('connected', data.connected);
+            } catch (error) {
+                textEl.textContent = '连接异常';
+                statusEl.classList.remove('connected');
+            }
+        }
+
+        function escapeHtml(value) {
+            const element = document.createElement('span');
+            element.textContent = String(value || '');
+            return element.innerHTML;
+        }
+
+        function renderAccessGrantRows(rows) {
+            const table = document.getElementById('accessApprovalsTable');
+            if (!rows.length) {
+                table.innerHTML = '<tr><td class="muted">暂无访问申请。</td></tr>';
+                return;
+            }
+            table.innerHTML = '<thead><tr><th><input id="accessGrantSelectAll" type="checkbox"></th><th>登录账号</th><th>显示名称</th><th>状态</th><th>拒绝理由</th><th>首次登录</th><th>最后更新</th></tr></thead><tbody>' + rows.map(row => `
+<tr><td><input class="access-grant-checkbox" type="checkbox" value="${row.id}"></td><td>${escapeHtml(row.username)}</td><td>${escapeHtml(row.display_name)}</td><td>${escapeHtml(row.status)}</td><td>${escapeHtml(row.denial_reason)}</td><td>${escapeHtml(row.created_at)}</td><td>${escapeHtml(row.updated_at)}</td></tr>`).join('') + '</tbody>';
+            document.getElementById('accessGrantSelectAll').addEventListener('change', event => {
+                document.querySelectorAll('.access-grant-checkbox').forEach(box => { box.checked = event.target.checked; });
+            });
+        }
+
+        async function loadAccessGrants() {
+            renderAccessGrantRows(await requestJson('/admin/webchat-access'));
+        }
+
+        window.updateAccessGrants = async function(action) {
+            const grant_ids = [...document.querySelectorAll('.access-grant-checkbox:checked')].map(box => Number(box.value));
+            if (!grant_ids.length) { alert('请先选择用户'); return; }
+            const denial_reason = action === 'deny' ? await showDenialReasonDialog() : '';
+            if (action === 'deny' && denial_reason === null) return;
+            await requestJson('/admin/webchat-access', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, grant_ids, denial_reason: denial_reason?.trim() || '' })
+            });
+            await loadAccessGrants();
+        };
+
+        function showDenialReasonDialog() {
+            return new Promise(resolve => {
+                const defaultReason = '您不是杭州超普信息技术有限公司的活跃客户，请联系杭州超普销售经理购买/续订产品后再申请授权访问。';
+                const overlay = document.createElement('div');
+                overlay.className = 'dialog-overlay';
+                overlay.innerHTML = `<div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="denialReasonTitle">
+                    <h3 id="denialReasonTitle">填写拒绝理由</h3>
+                    <div class="muted">该理由将展示给被拒绝的用户，请确认内容准确且不超过 500 个字符。</div>
+                    <textarea id="denialReasonInput" maxlength="500"></textarea>
+                    <div class="dialog-actions">
+                        <button type="button" class="btn" id="cancelDenialReason">取消</button>
+                        <button type="button" class="btn danger" id="confirmDenialReason">确认拒绝</button>
+                    </div>
+                </div>`;
+                document.body.appendChild(overlay);
+                const input = overlay.querySelector('#denialReasonInput');
+                input.value = defaultReason;
+                input.focus();
+                const close = value => { overlay.remove(); resolve(value); };
+                overlay.querySelector('#cancelDenialReason').addEventListener('click', () => close(null));
+                overlay.querySelector('#confirmDenialReason').addEventListener('click', () => {
+                    const reason = input.value.trim();
+                    if (!reason) { alert('拒绝理由不能为空'); input.focus(); return; }
+                    close(reason);
+                });
+                overlay.addEventListener('click', event => { if (event.target === overlay) close(null); });
+            });
+        }
+
+        function renderAdminRows(rows) {
+            const table = document.getElementById('adminAccountsTable');
+            if (!rows.length) {
+                table.innerHTML = '<tr><td>暂无管理员账号</td></tr>';
+                return;
+            }
+            table.innerHTML = '<thead><tr><th>ID</th><th>显示名称</th><th>账号</th><th>启用</th><th>MFA</th><th>创建时间</th><th>最后登录</th><th>操作</th></tr></thead><tbody>' + rows.map(row => `
+<tr>
+  <td>${row.id}</td>
+  <td><input id="display-${row.id}" value="${(row.display_name || '').replace(/"/g, '&quot;')}"></td>
+  <td><input id="username-${row.id}" value="${(row.username || '').replace(/"/g, '&quot;')}"></td>
+  <td style="text-align:center"><input id="enabled-${row.id}" type="checkbox" ${row.is_active ? 'checked' : ''}></td>
+  <td><span class="${row.mfa_enabled ? 'status-on' : 'status-off'}">${row.mfa_enabled ? '已启用' : '未启用'}</span></td>
+  <td>${row.created_at}</td>
+  <td>${row.last_login || ''}</td>
+  <td><div class="actions-wrap">
+    <button class="btn" onclick="saveAdmin(${row.id})">保存账号</button>
+    <button class="btn" onclick="changePassword(${row.id})">修改密码</button>
+    <button class="btn" onclick="showMfaBindDialog(${row.id})">${row.mfa_enabled ? '重新绑定MFA' : '启用MFA'}</button>
+    ${row.mfa_enabled ? `<button class="btn danger" onclick="disableMfa(${row.id})">删除MFA</button>` : ''}
+    <button class="btn danger" onclick="deleteAdmin(${row.id})">删除</button>
+  </div></td>
+</tr>`).join('') + '</tbody>';
+        }
+
+        async function loadAdminAccounts() {
+            const rows = await requestJson('/admin/accounts');
+            renderAdminRows(rows);
+        }
+
+        window.saveAdmin = async function(id) {
+            await requestJson('/admin/accounts/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('username-' + id).value.trim(),
+                    display_name: document.getElementById('display-' + id).value.trim(),
+                    is_active: document.getElementById('enabled-' + id).checked
+                })
+            });
+            await loadAdminAccounts();
+        }
+
+        window.changePassword = async function(id) {
+            const password = prompt('请输入新密码（至少 8 位）');
+            if (password === null) return;
+            await requestJson('/admin/accounts/' + id + '/password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            });
+            alert('密码已更新');
+        }
+
+        window.showMfaBindDialog = async function(id) {
+            const statusEl = document.getElementById('account-status-message');
+            statusEl.style.color = '#6b7280';
+            statusEl.textContent = '正在生成MFA绑定信息...';
+            let data;
+            try {
+                data = await requestJson('/admin/accounts/' + id + '/mfa/setup');
+            } catch(err) {
+                statusEl.style.color = '#dc2626';
+                statusEl.textContent = '生成绑定信息失败：' + err.message;
+                return;
+            }
+            const dialogHtml = `<div style="padding:16px;max-width:560px;">
+                <div style="font-size:14px;font-weight:700;margin-bottom:8px;">绑定软件验证器 OTP</div>
+                <div style="font-size:12px;color:#64748b;margin-bottom:8px;">请使用验证器 App（如 Google Authenticator）扫描右侧二维码添加账户，然后输入 6 位验证码确认。</div>
+                <div style="display:flex;gap:14px;align-items:flex-start;justify-content:space-between;">
+                    <div style="flex:1;min-width:0;">
+                        <label style="display:block;font-size:12px;color:#64748b;margin-bottom:4px;">输入验证器中的 6 位 OTP</label>
+                        <input id="mfa-otp-input" type="text" inputmode="numeric" maxlength="6" placeholder="例如：123456" style="width:180px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:14px;letter-spacing:2px;">
+                    </div>
+                    <div style="width:240px;display:flex;justify-content:flex-end;">
+                        <div id="mfa-qrcode" style="padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;"></div>
+                    </div>
+                </div>
+            </div>`;
+            const dialogDiv = document.createElement('div');
+            dialogDiv.innerHTML = dialogHtml;
+            dialogDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;background:#fff;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.2);width:min(92vw,620px);';
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;';
+            const btnContainer = document.createElement('div');
+            btnContainer.style.cssText = 'padding:12px 16px;border-top:1px solid #e2e8f0;display:flex;gap:8px;justify-content:flex-end;';
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = '取消';
+            cancelBtn.className = 'btn';
+            cancelBtn.onclick = () => { document.body.removeChild(overlay); document.body.removeChild(dialogDiv); statusEl.textContent = ''; };
+            const okBtn = document.createElement('button');
+            okBtn.textContent = '验证并启用MFA';
+            okBtn.className = 'btn primary';
+            okBtn.onclick = async () => {
+                const otpValue = String(document.getElementById('mfa-otp-input').value || '').trim();
+                if (!/^\d{6}$/.test(otpValue)) { statusEl.style.color='#dc2626'; statusEl.textContent = '请输入 6 位数字OTP验证码'; return; }
+                statusEl.style.color = '#6b7280';
+                statusEl.textContent = '正在启用MFA...';
+                try {
+                    await requestJson('/admin/accounts/' + id + '/mfa/enable', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ otp_code: otpValue })
+                    });
+                    statusEl.style.color = '#059669';
+                    statusEl.textContent = '✓ MFA已启用，后续登录将使用OTP验证';
+                    document.body.removeChild(overlay);
+                    document.body.removeChild(dialogDiv);
+                    await loadAdminAccounts();
+                } catch(err) {
+                    statusEl.style.color = '#dc2626';
+                    statusEl.textContent = '启用失败：' + err.message;
+                }
+            };
+            btnContainer.appendChild(cancelBtn);
+            btnContainer.appendChild(okBtn);
+            dialogDiv.appendChild(btnContainer);
+            document.body.appendChild(overlay);
+            document.body.appendChild(dialogDiv);
+            const qrContainer = document.getElementById('mfa-qrcode');
+            if (qrContainer && typeof QRCode !== 'undefined') {
+                qrContainer.innerHTML = '';
+                new QRCode(qrContainer, { text: String(data.otpauth_uri || ''), width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+            } else if (qrContainer) {
+                qrContainer.innerHTML = '<div style="font-size:12px;color:#ef4444;max-width:200px;">二维码加载失败，请手动输入密钥：' + (data.secret || '') + '</div>';
+            }
+            document.getElementById('mfa-otp-input')?.focus();
+            statusEl.style.color = '#6b7280';
+            statusEl.textContent = '请完成验证器绑定并输入 OTP 进行确认';
+        }
+
+        window.disableMfa = async function(id) {
+            if (!confirm('确认删除该账号绑定的MFA？删除后登录将不再要求OTP。')) return;
+            const statusEl = document.getElementById('account-status-message');
+            statusEl.style.color = '#6b7280';
+            statusEl.textContent = '正在删除MFA...';
+            try {
+                await requestJson('/admin/accounts/' + id + '/mfa/disable', { method: 'POST' });
+                statusEl.style.color = '#059669';
+                statusEl.textContent = '✓ MFA已删除';
+                await loadAdminAccounts();
+            } catch(err) {
+                statusEl.style.color = '#dc2626';
+                statusEl.textContent = '删除MFA失败：' + err.message;
+            }
+        }
+
+        window.deleteAdmin = async function(id) {
+            if (!confirm('确认删除该管理员账号吗？')) return;
+            await requestJson('/admin/accounts/' + id, { method: 'DELETE' });
+            await loadAdminAccounts();
+        }
+
+        document.getElementById('addAdminBtn').addEventListener('click', async () => {
+            const username = document.getElementById('newAdminUsername').value.trim();
+            const display_name = document.getElementById('newAdminDisplayName').value.trim();
+            const password = document.getElementById('newAdminPassword').value;
+            const password_confirm = document.getElementById('newAdminPasswordConfirm').value;
+            if (password !== password_confirm) { alert('两次密码输入不一致'); return; }
+            await requestJson('/admin/accounts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, display_name, password })
+            });
+            document.getElementById('newAdminUsername').value = '';
+            document.getElementById('newAdminDisplayName').value = '';
+            document.getElementById('newAdminPassword').value = '';
+            document.getElementById('newAdminPasswordConfirm').value = '';
+            await loadAdminAccounts();
+        });
+
+        function renderLogRows(rows) {
+            const table = document.getElementById('logsTable');
+            const logFilters = {
+                access_time: new Set(),
+                ip_address: new Set(),
+                login_account: new Set(),
+                question_content: new Set()
+            };
+            
+            // 收集所有唯一值（仅访问时间、IP、问题内容有筛选）
+            rows.forEach(row => {
+                logFilters.access_time.add(row.access_time);
+                logFilters.ip_address.add(row.ip_address);
+                logFilters.login_account.add(row.login_account);
+                logFilters.question_content.add(row.question_content);
+            });
+
+            // 转换为数组并排序
+            Object.keys(logFilters).forEach(key => {
+                logFilters[key] = Array.from(logFilters[key]).sort();
+            });
+
+            // 创建表头HTML（仅包含按钮，面板在body层）
+            const createFilterButton = (columnKey, label) => {
+                return `<div class="filter-dropdown">
+                    <span>${label}</span>
+                    <button type="button" class="filter-dropdown-btn" data-filter-column="${columnKey}" onclick="openLogFilterDropdown('${columnKey}', this); event.stopPropagation();">▼</button>
+                </div>`;
+            };
+
+            const theadHtml = `<thead><tr>
+                <th style="width:180px;">${createFilterButton('access_time', '访问时间')}</th>
+                <th style="width:220px;">${createFilterButton('login_account', '登录账号')}</th>
+                <th style="width:120px;">${createFilterButton('ip_address', 'IP地址')}</th>
+                <th style="width:140px;">操作系统</th>
+                <th style="width:140px;">浏览器</th>
+                <th>${createFilterButton('question_content', '提交问题')}</th>
+            </tr></thead>`;
+
+            const tbody = rows.map(row => `<tr>
+                <td>${row.access_time}</td>
+                <td>${row.login_account}</td>
+                <td>${row.ip_address}</td>
+                <td>${row.os_version}</td>
+                <td>${row.browser_version}</td>
+                <td>${row.question_content}</td>
+            </tr>`).join('');
+
+            table.innerHTML = theadHtml + '<tbody>' + tbody + '</tbody>';
+            
+            // 存储日志数据和筛选状态
+            window.allLogRows = rows;
+            window.logFilterStates = {
+                access_time: new Set(),
+                ip_address: new Set(),
+                login_account: new Set(),
+                question_content: new Set()
+            };
+            window.logFilterOptions = logFilters;
+
+            // 初始化筛选按钮的点击事件
+            document.querySelectorAll('.filter-dropdown-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const columnKey = btn.dataset.filterColumn;
+                    openLogFilterDropdown(columnKey, btn);
+                });
+            });
+        }
+
+        window.openLogFilterDropdown = function(columnKey, btnElement) {
+            // 关闭之前的面板
+            closeLogFilterDropdown();
+
+            const filterId = `log-filter-${columnKey}`;
+            let panel = document.getElementById(filterId);
+            
+            if (!panel) {
+                // 创建新面板
+                const panelHtml = `<div class="filter-panel" id="${filterId}" data-column="${columnKey}">
+                    <div class="filter-panel-header">
+                        <input type="text" class="filter-search" placeholder="搜索...">
+                    </div>
+                    <div class="filter-panel-content"></div>
+                    <div class="filter-panel-footer">
+                        <span class="filter-count">已选: <span class="count">0</span> / <span class="total">${window.logFilterOptions[columnKey].length}</span></span>
+                        <div class="filter-actions">
+                            <a href="#" onclick="return selectAllLogFilters('${columnKey}')">全选</a>
+                            <a href="#" onclick="return clearLogFilters('${columnKey}')">清空</a>
+                        </div>
+                    </div>
+                </div>`;
+                document.getElementById('logs-filter-panel-container').innerHTML = panelHtml;
+                panel = document.getElementById(filterId);
+                initLogFilterPanel(columnKey, window.logFilterOptions[columnKey]);
+            }
+
+            // 定位面板到按钮下方，左侧与表格列对齐
+            const btnRect = btnElement.getBoundingClientRect();
+            const th = btnElement.closest('th');
+            const thRect = th ? th.getBoundingClientRect() : btnRect;
+            
+            // 面板左侧与列左侧对齐
+            panel.style.position = 'fixed';
+            panel.style.top = (btnRect.bottom + 2) + 'px';
+            panel.style.left = thRect.left + 'px';
+            panel.classList.add('show');
+            
+            btnElement.classList.add('active');
+        };
+
+        window.closeLogFilterDropdown = function() {
+            document.querySelectorAll('#logs-filter-panel-container .filter-panel').forEach(p => p.classList.remove('show'));
+            document.querySelectorAll('.filter-dropdown-btn').forEach(b => b.classList.remove('active'));
+        };
+
+        function initLogFilterPanel(columnKey, values) {
+            const panelId = `log-filter-${columnKey}`;
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
+
+            const content = panel.querySelector('.filter-panel-content');
+            const searchInput = panel.querySelector('.filter-search');
+            const countSpan = panel.querySelector('.count');
+            const totalSpan = panel.querySelector('.total');
+
+            totalSpan.textContent = values.length;
+
+            function renderItems(filterText = '') {
+                const filtered = values.filter(v => v.toLowerCase().includes(filterText.toLowerCase()));
+                content.innerHTML = filtered.map((value, idx) => `
+                    <label class="filter-item">
+                        <input type="checkbox" class="filter-checkbox" value="${value}" data-column="${columnKey}" onchange="updateLogFilter('${columnKey}')">
+                        <span class="filter-item-label" title="${value}">${value || '(空)'}</span>
+                    </label>
+                `).join('');
+            }
+
+            renderItems();
+
+            searchInput.addEventListener('input', (e) => {
+                renderItems(e.target.value);
+            });
+
+            searchInput.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+
+        window.updateLogFilter = function(columnKey) {
+            const selectedValues = new Set();
+            document.querySelectorAll(`.filter-checkbox[data-column="${columnKey}"]:checked`).forEach(cb => {
+                selectedValues.add(cb.value);
+            });
+            
+            window.logFilterStates[columnKey] = selectedValues;
+
+            // 更新计数
+            const panelId = `log-filter-${columnKey}`;
+            const panel = document.getElementById(panelId);
+            if (panel) {
+                panel.querySelector('.count').textContent = selectedValues.size;
+            }
+
+            // 应用筛选
+            applyLogFilters();
+        };
+
+        window.selectAllLogFilters = function(columnKey) {
+            document.querySelectorAll(`.filter-checkbox[data-column="${columnKey}"]`).forEach(cb => {
+                cb.checked = true;
+            });
+            window.updateLogFilter(columnKey);
+            return false;
+        };
+
+        window.clearLogFilters = function(columnKey) {
+            document.querySelectorAll(`.filter-checkbox[data-column="${columnKey}"]`).forEach(cb => {
+                cb.checked = false;
+            });
+            window.updateLogFilter(columnKey);
+            return false;
+        };
+
+        function applyLogFilters() {
+            if (!window.allLogRows) return;
+            
+            const filteredRows = window.allLogRows.filter(row => {
+                // 如果某个筛选器有选择，则行必须匹配该筛选器
+                for (const [columnKey, selectedValues] of Object.entries(window.logFilterStates)) {
+                    if (selectedValues.size > 0) {
+                        const rowValue = row[columnKey];
+                        if (!selectedValues.has(rowValue)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            });
+
+            // 更新表格内容
+            const table = document.getElementById('logsTable');
+            const thead = table.querySelector('thead');
+            const tbody = filteredRows.map(row => `<tr>
+                <td>${row.access_time}</td>
+                <td>${row.login_account}</td>
+                <td>${row.ip_address}</td>
+                <td>${row.os_version}</td>
+                <td>${row.browser_version}</td>
+                <td>${row.question_content}</td>
+            </tr>`).join('');
+            
+            table.innerHTML = thead.outerHTML + '<tbody>' + tbody + '</tbody>';
+        }
+
+        async function loadLogs() {
+            const rows = await requestJson('/admin/logs');
+            renderLogRows(rows);
+        }
+
+        document.getElementById('refreshLogsBtn').addEventListener('click', () => loadLogs());
+        
+        // 全局点击事件：关闭筛选面板
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.filter-dropdown') && !e.target.closest('#logs-filter-panel-container')) {
+                closeLogFilterDropdown();
+            }
+        });
+        
+        switchPanel('faqPanel');
+    </script>
+</body>
+</html>

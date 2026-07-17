@@ -1,0 +1,7 @@
+microsoft-agents-hosting-aiohttp
+aiohttp
+debugpy
+agent-dev-cli>=0.0.1b260427
+python-dotenv
+jinja2
+msal
